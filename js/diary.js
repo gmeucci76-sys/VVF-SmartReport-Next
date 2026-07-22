@@ -154,23 +154,30 @@ export function closeDiary() {
   view.hidden = true;
 }
 
+async function addEvent(description, time = eventTime.value || new Date().toTimeString().slice(0, 5)) {
+  activeIntervention.events.push({
+    id: crypto.randomUUID(), time, category: 'operational', description, createdAt: new Date().toISOString()
+  });
+  activeIntervention.updatedAt = new Date().toISOString();
+  await saveIntervention(activeIntervention);
+  eventDescription.value = '';
+  eventTime.value = new Date().toTimeString().slice(0, 5);
+  renderEvents();
+}
+
 export function initialiseDiary({ onBack, onChanged }) {
   document.querySelector('#diary-back').addEventListener('click', () => { closeDiary(); onBack(); });
   eventForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const description = eventDescription.value.trim();
     if (!description) return;
-    activeIntervention.events.push({
-      id: crypto.randomUUID(), time: eventTime.value || new Date().toTimeString().slice(0, 5),
-      category: 'operational', description, createdAt: new Date().toISOString()
-    });
-    activeIntervention.updatedAt = new Date().toISOString();
-    await saveIntervention(activeIntervention);
-    eventDescription.value = '';
-    eventTime.value = new Date().toTimeString().slice(0, 5);
-    renderEvents();
+    await addEvent(description);
     onChanged();
   });
+  document.querySelectorAll('.quick-event').forEach((button) => button.addEventListener('click', async () => {
+    await addEvent(button.dataset.eventText, new Date().toTimeString().slice(0, 5));
+    onChanged();
+  }));
   document.querySelector('#close-intervention').addEventListener('click', async () => {
     if (!confirm('Chiudere l’intervento? Potrai ancora consultare il diario finché non lo elimini.')) return;
     activeIntervention.status = 'closed';
