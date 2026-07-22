@@ -130,6 +130,8 @@ function renderHeader() {
   status.textContent = activeIntervention.status === 'closed' ? 'CHIUSO' : 'IN CORSO';
   status.className = `status-badge ${activeIntervention.status === 'closed' ? 'status-closed' : ''}`;
   eventForm.hidden = activeIntervention.status === 'closed';
+  document.querySelector('#close-intervention').hidden = activeIntervention.status === 'closed';
+  document.querySelector('#reopen-intervention').hidden = activeIntervention.status !== 'closed';
 }
 
 export async function openDiary(id) {
@@ -176,6 +178,16 @@ export function initialiseDiary({ onBack, onChanged }) {
     const retentionDays = Number(localStorage.getItem('vvf-retention-days') || 7);
     activeIntervention.expiresAt = new Date(Date.now() + retentionDays * 86400000).toISOString();
     activeIntervention.updatedAt = activeIntervention.closedAt;
+    await saveIntervention(activeIntervention);
+    renderHeader();
+    onChanged();
+  });
+  document.querySelector('#reopen-intervention').addEventListener('click', async () => {
+    if (!confirm('Riaprire l’intervento? La cancellazione automatica verrà annullata.')) return;
+    activeIntervention.status = 'open';
+    delete activeIntervention.closedAt;
+    delete activeIntervention.expiresAt;
+    activeIntervention.updatedAt = new Date().toISOString();
     await saveIntervention(activeIntervention);
     renderHeader();
     onChanged();
