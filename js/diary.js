@@ -174,10 +174,6 @@ export function initialiseDiary({ onBack, onChanged }) {
     await addEvent(description);
     onChanged();
   });
-  document.querySelectorAll('.quick-event').forEach((button) => button.addEventListener('click', async () => {
-    await addEvent(button.dataset.eventText, new Date().toTimeString().slice(0, 5));
-    onChanged();
-  }));
   document.querySelector('#close-intervention').addEventListener('click', async () => {
     if (!confirm('Chiudere l’intervento? Potrai ancora consultare il diario finché non lo elimini.')) return;
     activeIntervention.status = 'closed';
