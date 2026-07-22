@@ -230,11 +230,13 @@ export function initialiseDiary({ onBack, onChanged }) {
       return;
     }
     if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
-      alert('La registrazione audio non è supportata da questo dispositivo.');
+      audioInput.setAttribute('capture', 'microphone');
+      audioInput.click();
       return;
     }
     try {
-      audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      recordAudioButton.textContent = '🎙 Autorizza microfono…';
+      audioStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
       audioChunks = [];
       recorder = new MediaRecorder(audioStream);
       recorder.addEventListener('dataavailable', (event) => { if (event.data.size) audioChunks.push(event.data); });
@@ -255,7 +257,7 @@ export function initialiseDiary({ onBack, onChanged }) {
     } catch (error) {
       console.error('Registrazione audio non disponibile', error);
       recordAudioButton.textContent = '🎙 Registra audio';
-      alert('Il microfono non è disponibile. Verifica il permesso sul dispositivo.');
+      alert('Il microfono non è disponibile. Consenti l’uso del microfono nelle impostazioni del browser o dell’app e riprova.');
     }
   });
   document.querySelector('#add-location').addEventListener('click', () => {
@@ -275,7 +277,7 @@ export function initialiseDiary({ onBack, onChanged }) {
   });
   document.querySelector('#print-report').addEventListener('click', () => {
     const eventRows = activeIntervention.events.map((event) => `<li><strong>${escapeHtml(event.time)}</strong> — ${escapeHtml(event.description)}</li>`).join('');
-    const report = window.open('', '_blank', 'noopener,noreferrer');
+    const report = window.open('about:blank', '_blank');
     if (!report) { alert('Consenti l’apertura della finestra per esportare il PDF.'); return; }
     const number = escapeHtml(activeIntervention.number);
     const progressive = escapeHtml(activeIntervention.progressive);
@@ -292,9 +294,8 @@ export function initialiseDiary({ onBack, onChanged }) {
     ].join('');
     const attachments = activeIntervention.attachments || [];
     const attachmentSummary = reportSection('Allegati', [['Foto', attachments.filter((attachment) => attachment.kind === 'image' || !attachment.kind).length], ['Audio', attachments.filter((attachment) => attachment.kind === 'audio').length], ['Video', attachments.filter((attachment) => attachment.kind === 'video').length]]);
-    report.document.write(`<!doctype html><html lang="it"><head><title>Intervento ${number}/${progressive}</title><style>body{font-family:Arial,sans-serif;max-width:760px;margin:35px auto;color:#18212b}h1{color:#b5121b;margin-bottom:4px}h2{margin-top:0}h3{margin:28px 0 9px;padding-bottom:6px;border-bottom:2px solid #b5121b}li{margin:10px 0;line-height:1.4}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:8px;border-bottom:1px solid #dfe4e8;text-align:left;vertical-align:top}th{width:36%;color:#53606c}@media print{body{margin:0}}</style></head><body><h1>VVF SmartReport</h1><h2>Intervento ${number}/${progressive}</h2><p><strong>${type || 'Tipologia da completare'}</strong><br>${municipality || 'Luogo da completare'}${address}</p>${structuredData}<h3>Diario operativo</h3><ol>${eventRows || '<li>Nessun evento registrato.</li>'}</ol>${attachmentSummary}</body></html>`);
+    report.document.write(`<!doctype html><html lang="it"><head><title>Intervento ${number}/${progressive}</title><style>body{font-family:Arial,sans-serif;max-width:760px;margin:35px auto;color:#18212b}h1{color:#b5121b;margin-bottom:4px}h2{margin-top:0}h3{margin:28px 0 9px;padding-bottom:6px;border-bottom:2px solid #b5121b}li{margin:10px 0;line-height:1.4}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:8px;border-bottom:1px solid #dfe4e8;text-align:left;vertical-align:top}th{width:36%;color:#53606c}.print{margin:0 0 24px}.print button{padding:12px 16px;border:0;border-radius:8px;background:#b5121b;color:#fff;font:700 15px Arial}@media print{body{margin:0}.print{display:none}}</style></head><body><div class="print"><button onclick="window.print()">Stampa / salva come PDF</button></div><h1>VVF SmartReport</h1><h2>Intervento ${number}/${progressive}</h2><p><strong>${type || 'Tipologia da completare'}</strong><br>${municipality || 'Luogo da completare'}${address}</p>${structuredData}<h3>Diario operativo</h3><ol>${eventRows || '<li>Nessun evento registrato.</li>'}</ol>${attachmentSummary}</body></html>`);
     report.document.close();
     report.focus();
-    report.print();
   });
 }

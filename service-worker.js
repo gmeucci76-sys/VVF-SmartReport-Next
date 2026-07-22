@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vvf-smartreport-next-v27';
+const CACHE_NAME = 'vvf-smartreport-next-v28';
 const APP_SHELL = [
   './',
   './index.html',
