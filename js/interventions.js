@@ -6,6 +6,7 @@ const vehicleSelect = form.elements.namedItem('vehicle');
 const customVehicleField = document.querySelector('#custom-vehicle-field');
 const customVehicleInput = form.elements.namedItem('customVehicle');
 const typeSelect = form.elements.namedItem('type');
+const typeCategorySelect = form.elements.namedItem('typeCategory');
 const customTypeField = document.querySelector('#custom-type-field');
 const customTypeInput = form.elements.namedItem('customType');
 
@@ -13,14 +14,27 @@ export function initialiseNewInterventionForm(onSaved) {
   vehicleSelect.addEventListener('change', () => {
     const isCustom = vehicleSelect.value === 'Altro';
     customVehicleField.hidden = !isCustom;
-    customVehicleInput.required = isCustom;
     if (!isCustom) customVehicleInput.value = '';
   });
   typeSelect.addEventListener('change', () => {
-    const isCustom = typeSelect.value === 'Altro';
+    const isCustom = typeSelect.value === 'other';
     customTypeField.hidden = !isCustom;
-    customTypeInput.required = isCustom;
     if (!isCustom) customTypeInput.value = '';
+  });
+  typeCategorySelect.addEventListener('change', () => {
+    const values = typeCategorySelect._types?.[typeCategorySelect.value] || [];
+    typeSelect.replaceChildren(new Option(typeCategorySelect.value ? 'Seleziona tipologia…' : 'Prima scegli la categoria…', ''));
+    values.forEach((value) => typeSelect.add(new Option(value, value)));
+    typeSelect.add(new Option('Altro…', 'other'));
+    customTypeField.hidden = true;
+    customTypeInput.value = '';
+  });
+  fetch('./js/catalogs.json').then((response) => response.json()).then((catalogs) => {
+    typeCategorySelect._types = catalogs.tipologie;
+    Object.keys(catalogs.tipologie).forEach((category) => typeCategorySelect.add(new Option(category, category)));
+  }).catch(() => {
+    typeSelect.replaceChildren(new Option('Catalogo non disponibile', ''));
+    typeSelect.add(new Option('Altro…', 'other'));
   });
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -32,7 +46,8 @@ export function initialiseNewInterventionForm(onSaved) {
       id: crypto.randomUUID(),
       number: formData.get('number').trim(),
       progressive: formData.get('progressive').trim(),
-      type: formData.get('type') === 'Altro' ? formData.get('customType').trim() : formData.get('type').trim(),
+      typeCategory: formData.get('typeCategory').trim(),
+      type: formData.get('type') === 'other' ? formData.get('customType').trim() : formData.get('type').trim(),
       municipality: formData.get('municipality').trim(),
       address: formData.get('address').trim(),
       departureTime: formData.get('departureTime'),
@@ -48,9 +63,8 @@ export function initialiseNewInterventionForm(onSaved) {
       await saveIntervention(intervention);
       form.reset();
       customVehicleField.hidden = true;
-      customVehicleInput.required = false;
       customTypeField.hidden = true;
-      customTypeInput.required = false;
+      typeSelect.replaceChildren(new Option('Prima scegli la categoria…', ''));
       onSaved(intervention);
     } catch (error) {
       console.error('Impossibile salvare l’intervento', error);

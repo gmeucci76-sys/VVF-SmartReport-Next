@@ -86,12 +86,8 @@
             <label>Numero<input name="number" inputmode="numeric" autocomplete="off"></label>
             <label>Progressivo<input name="progressive" inputmode="numeric" autocomplete="off"></label>
           </div>
-          <label>Tipologia
-            <select name="type">
-              <option value="">Seleziona tipologia…</option>
-              <option>Falso allarme</option><option>Incendio</option><option>Incendio vegetazione</option><option>Incendio rifiuti</option><option>Esplosione</option><option>Incidente stradale</option><option>Incidente stradale con merci pericolose</option><option>Incidente ferroviario</option><option>Incidente nautico</option><option>Dissesto statico</option><option>Allagamento / danno d'acqua</option><option>Fuga gas</option><option>Apertura porta</option><option>Ascensore bloccato</option><option>Soccorso a persona</option><option>Recupero animale</option><option>Recupero veicolo</option><option>Bonifica</option><option>Albero pericolante</option><option>Ricerca persona</option><option>Intervento NBCR</option><option>Protezione Civile</option><option>Altro</option>
-            </select>
-          </label>
+          <label>Categoria tipologia<select id="quick-type-category" name="typeCategory"><option value="">Seleziona categoria…</option></select></label>
+          <label>Specifica la tipologia<select id="quick-type" name="type"><option value="">Prima scegli la categoria…</option></select></label>
           <label id="custom-type-field" hidden>Specifica la tipologia<input name="customType" placeholder="Descrivi la tipologia…" autocomplete="off"></label>
           <label>Comune<input name="municipality" autocomplete="address-level2"></label>
           <label>Indirizzo<input name="address" autocomplete="street-address"></label>
