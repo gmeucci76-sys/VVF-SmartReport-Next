@@ -195,7 +195,7 @@ export function initialiseDiary({ onBack, onChanged }) {
       reader.onload = () => resolve({ id: crypto.randomUUID(), kind: 'image', data: reader.result, time: new Date().toTimeString().slice(0, 5) });
       reader.onerror = () => reject(reader.error);
       reader.readAsDataURL(file);
-    }))));
+    })));
     activeIntervention.attachments.push(...images);
     activeIntervention.updatedAt = new Date().toISOString();
     await saveIntervention(activeIntervention);
