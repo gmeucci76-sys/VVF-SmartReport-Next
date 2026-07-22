@@ -37,6 +37,22 @@ function getValue(name) {
   return field.type === 'checkbox' ? field.checked : field.value.trim();
 }
 
+function syncVehicleOther(name, savedValue = '') {
+  const select = form.elements.namedItem(name);
+  const other = form.elements.namedItem(`${name}Other`);
+  const wrapper = document.querySelector(`[data-vehicle-other="${name}"]`);
+  const knownValues = [...select.options].map((option) => option.value).filter((value) => value && value !== 'other');
+  const useOther = savedValue && !knownValues.includes(savedValue);
+  select.value = useOther ? 'other' : (savedValue || '');
+  other.value = useOther ? savedValue : '';
+  wrapper.hidden = select.value !== 'other';
+}
+
+function selectedVehicle(name) {
+  const select = form.elements.namedItem(name);
+  return select.value === 'other' ? getValue(`${name}Other`) : select.value;
+}
+
 function addSmartListItem(list, value = '') {
   const row = document.createElement('div');
   row.className = 'smart-list-row';
@@ -81,6 +97,8 @@ export async function openRecord(id) {
   setDependentOptions('record-cause-category', 'record-cause', 'cause', data.cause);
   ['number', 'progressive', 'municipality', 'address', 'departureTime', 'arrivalTime', 'returnTime'].forEach((key) => setField(key, activeIntervention[key]));
   Object.entries(data).forEach(([key, value]) => setField(key, value));
+  syncVehicleOther('departureVehicle', data.departureVehicle || activeIntervention.vehicle || '');
+  syncVehicleOther('supportVehicle', data.supportVehicle || '');
   renderSmartList('supportVehicles', data.supportVehicles || []);
   renderSmartList('specialUnits', data.specialUnits || []);
   renderSmartList('entities', data.entities || []);
@@ -105,6 +123,10 @@ export function initialiseRecord({ onBack, onSaved }) {
       data[field.name] = listFields.includes(field.name) ? field.value.split('\n').map((value) => value.trim()).filter(Boolean) : (field.type === 'checkbox' ? field.checked : field.value.trim());
     });
     ['supportVehicles', 'specialUnits', 'entities'].forEach((field) => { data[field] = smartListValues(field); });
+    data.departureVehicle = selectedVehicle('departureVehicle');
+    data.supportVehicle = selectedVehicle('supportVehicle');
+    delete data.departureVehicleOther;
+    delete data.supportVehicleOther;
     activeIntervention.number = getValue('number');
     activeIntervention.progressive = getValue('progressive');
     activeIntervention.type = getValue('type') || activeIntervention.type;
@@ -113,12 +135,21 @@ export function initialiseRecord({ onBack, onSaved }) {
     activeIntervention.departureTime = getValue('departureTime');
     activeIntervention.arrivalTime = getValue('arrivalTime');
     activeIntervention.returnTime = getValue('returnTime');
+    activeIntervention.vehicle = data.departureVehicle || activeIntervention.vehicle;
     activeIntervention.details = data;
     activeIntervention.updatedAt = new Date().toISOString();
     await saveIntervention(activeIntervention);
     const savedId = activeIntervention.id;
     closeRecord();
     onSaved(savedId);
+  });
+  ['departureVehicle', 'supportVehicle'].forEach((name) => {
+    form.elements.namedItem(name).addEventListener('change', () => {
+      const select = form.elements.namedItem(name);
+      const other = form.elements.namedItem(`${name}Other`);
+      document.querySelector(`[data-vehicle-other="${name}"]`).hidden = select.value !== 'other';
+      if (select.value !== 'other') other.value = '';
+    });
   });
   document.querySelectorAll('.btn-add-list').forEach((button) => button.addEventListener('click', () => addSmartListItem(button.closest('.smart-list'))));
 }
