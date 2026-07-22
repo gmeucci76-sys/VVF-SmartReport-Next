@@ -56,17 +56,30 @@ function selectedVehicle(name) {
 function addSmartListItem(list, value = '') {
   const row = document.createElement('div');
   row.className = 'smart-list-row';
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.value = value;
-  input.setAttribute('list', list.dataset.datalist);
-  input.placeholder = 'Seleziona o scrivi…';
+  const select = document.createElement('select');
+  select.setAttribute('aria-label', 'Seleziona una voce');
+  select.add(new Option('Seleziona…', ''));
+  const availableValues = [...document.querySelectorAll(`#${list.dataset.datalist} option`)].map((option) => option.value || option.textContent);
+  availableValues.forEach((optionValue) => select.add(new Option(optionValue, optionValue)));
+  select.add(new Option('Altro…', 'other'));
+  const custom = document.createElement('input');
+  custom.type = 'text';
+  custom.className = 'smart-list-other';
+  custom.placeholder = 'Specifica…';
+  const customValue = value && !availableValues.includes(value);
+  select.value = customValue ? 'other' : value;
+  custom.value = customValue ? value : '';
+  custom.hidden = !customValue;
+  select.addEventListener('change', () => {
+    custom.hidden = select.value !== 'other';
+    if (select.value !== 'other') custom.value = '';
+  });
   const remove = document.createElement('button');
   remove.type = 'button';
   remove.textContent = '−';
   remove.setAttribute('aria-label', 'Rimuovi voce');
   remove.addEventListener('click', () => row.remove());
-  row.append(input, remove);
+  row.append(select, custom, remove);
   list.querySelector('.smart-list-items').append(row);
 }
 
@@ -77,7 +90,10 @@ function renderSmartList(field, values = []) {
 }
 
 function smartListValues(field) {
-  return [...document.querySelectorAll(`.smart-list[data-list-field="${field}"] input`)].map((input) => input.value.trim()).filter(Boolean);
+  return [...document.querySelectorAll(`.smart-list[data-list-field="${field}"] .smart-list-row`)].map((row) => {
+    const select = row.querySelector('select');
+    return select.value === 'other' ? row.querySelector('.smart-list-other').value.trim() : select.value;
+  }).filter(Boolean);
 }
 
 export async function openRecord(id) {
